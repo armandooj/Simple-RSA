@@ -1,18 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "rsa.h"
-
-#define N 100
+ 
+#define N 50000
 
 int main() {
 
-	char message[] = "Test";
-	int *integers;
+	char message[] = "Testing";
+	int size = string_to_int(message, N);
 
-	integers = string_to_int(message, N);
-	printf("%s\n", message);
-
-	// http://math.stackexchange.com/questions/217816/converting-integer-to-ascii-string
+	//int_to_string(integer, strlen(message));
+	//printf("%s\n", test);
 
 	return 0;
 }

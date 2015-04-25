@@ -1,20 +1,30 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include "rsa.h"
 
-int calculate_int_size(int n) {
-	int aux = 0;
-	int size = 1;
-	while (n >= (256 << aux)) {
-		// printf("-> %d\n", 256 << aux);
-		size++;
-		aux += 8;
+// Finds the number of letters that would fit in n
+int calculate_int_size(mpz_t n) {
+	// The smallest a part can be is of 1 (one char)
+	if (mpz_cmp_d(n, 256) < 0) {
+		return 1;
 	}
-	return size;
+	mpz_t aux;
+	mpz_init(aux);
+	mpz_set_ui(aux, 2);
+	int size = 0;
+	int ex = 2;
+	// Equivalent to: while (n >= (256 << aux))
+	while (mpz_cmp(n, aux) > 0) {	
+		mpz_ui_pow_ui(aux, 16, ex);
+		size++;
+		ex += 2;
+	}
+	return size - 1;
 }
 
 // Converts a string to an array of integers bewteen 0 and n - 1
-int string_to_int(char *s, int n, unsigned int *out) {	
+int string_to_int(char *s, mpz_t n, unsigned int *out) {	
 	int s_len = strlen(s);
 	long aux;
 	unsigned int num, i, j = 0;
@@ -46,7 +56,7 @@ int string_to_int(char *s, int n, unsigned int *out) {
 	return pos;
 }
 
-void int_to_string(unsigned int *integers, int i_size, int n, char *out) {	
+void int_to_string(unsigned int *integers, int i_size, mpz_t n, char *out) {	
 	int size = calculate_int_size(n);
 	int i, aux, pos = 0;	
 	for (i = 0; i < i_size; i++) {

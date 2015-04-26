@@ -24,7 +24,7 @@ int calculate_int_size(mpz_t n) {
 }
 
 // Converts a string to an array of integers bewteen 0 and n - 1
-int string_to_int(char *s, mpz_t n, unsigned int *out) {	
+int string_to_int(char *s, mpz_t n, mpz_t *out) {	
 	int s_len = strlen(s);
 	long aux;
 	unsigned int num, i, j = 0;
@@ -49,22 +49,32 @@ int string_to_int(char *s, mpz_t n, unsigned int *out) {
 			aux++;
 		}
 		i += letters - 1;
-		out[pos++] = num;
+		mpz_init(out[pos]);
+		mpz_set_ui(out[pos], num);
+		// out[pos++] = num;
+		pos++;
 		printf(" Num: %d\n", num);
 	}	
 	
 	return pos;
 }
 
-void int_to_string(unsigned int *integers, int i_size, mpz_t n, char *out) {	
+void int_to_string(mpz_t *integers, int i_size, mpz_t n, char *out) {	
 	int size = calculate_int_size(n);
 	int i, aux, pos = 0;	
 	for (i = 0; i < i_size; i++) {
 		int j;
 		for (j = size - 1; j >= 0; j--) {
 			// Unshift the bits
-			char c = (char) (integers[i] >> 8 * j) % 256;
-			out[pos++] = c;
+			mpz_t temp;
+			mpz_init(temp);
+			// temp = integers[i] >> (8 * j)
+			mpz_fdiv_q_2exp(temp, integers[i], 8 * j);
+			// temp %= 256;
+			mpz_mod_ui(temp, temp, 256);			
+			// Store the letter in the char array
+			out[pos++] = (char) mpz_get_ui(temp);
+			mpz_clear(temp);
 		}	
 	}
 }

@@ -3,7 +3,7 @@
 #include <string.h>
 #include "rsa.h"
 
-#define N 80000000
+#define N 80000000000
 
 int main() {
 
@@ -12,15 +12,14 @@ int main() {
 	mpz_init(n);
 	mpz_set_ui(n, N);
 
-	char message[] = "Testing this out.";
-	unsigned int *int_array = malloc(sizeof(unsigned int) * strlen(message));
+	char message[] = "I'm normally not a praying man, but if you're up there, please save me, Superman. Oh, a *sarcasm* detector. Oh, that's a *really* useful invention!";
+	mpz_t *mpz_t_array = malloc(sizeof(mpz_t) * strlen(message));
 	
-	int no_elements = string_to_int(message, n, int_array);
+	int no_elements = string_to_int(message, n, mpz_t_array);
+	char buffer[strlen(message)];	
 
-	char buffer[strlen(message)];
-	int_to_string(int_array, no_elements, n, buffer);
-	
-	printf("Message: %s\n", buffer);
+	int_to_string(mpz_t_array, no_elements, n, buffer);	
+	printf("Message: %s\n", buffer);	
 
 	mpz_clear(n);
 	return 0;

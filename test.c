@@ -22,6 +22,20 @@ int main() {
 	
 	printf("\nMessage: %s\n", buffer);	
 
+	mpz_t x, n2, inv;
+	mpz_init(x);
+	mpz_init(n2);
+	mpz_init(inv);
+	mpz_set_ui(x, 197);
+	mpz_set_ui(n2, 3000);
+	inverse_mod(x, n2, &inv);
+
+	mpz_t p;
+	mpz_init(p);
+	mpz_set_ui(p, 919);
+	int prime = miller_rabin_test(p, 5);
+	gmp_printf("%Zd prime? = %d\n", p, prime);
+
 	free(mpz_t_array);
 	free(buffer);
 	mpz_clear(n);

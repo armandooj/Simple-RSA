@@ -26,8 +26,14 @@ int calculate_int_size(mpz_t n) {
 // Converts a string to an array of integers bewteen 0 and n - 1
 int string_to_int(char *s, mpz_t n, mpz_t *out) {	
 	int s_len = strlen(s);
-	long aux;
-	unsigned int num, i, j = 0;
+	int aux;
+	unsigned i, j = 0;
+	
+	mpz_t num, temp, base_256;
+	mpz_init(num);
+	mpz_init(temp);
+	mpz_init(base_256);
+	mpz_set_ui(base_256, 256);
 
 	// Calculate the the size of the chunks
 	int size = calculate_int_size(n);
@@ -40,20 +46,25 @@ int string_to_int(char *s, mpz_t n, mpz_t *out) {
 	int letters;
 	for (i = 0; i < s_len; i++) {
 		letters = 0;
-		num = 0;
+		mpz_set_ui(num, 0);
 		aux = 0;
+		// num += ((int) s[j]) * pow(256, size - aux - 1);
 		for (j = i; j < ((i + size) < s_len ? (i + size) : s_len); j++) {
-			printf("(%c)", s[j]);
-			num += ((int) s[j]) * pow(256, size - aux - 1);
+			printf("[%c]", s[j]);
+			// temp = pow(256, size - aux - 1)
+			mpz_pow_ui(temp, base_256, size - aux - 1);
+			// temp *= (int) s[j];
+			mpz_mul_ui(temp, temp, (int) s[j]);
+			// num += temp;
+			mpz_add(num, num, temp);			
 			letters++;
 			aux++;
 		}
 		i += letters - 1;
 		mpz_init(out[pos]);
-		mpz_set_ui(out[pos], num);
-		// out[pos++] = num;
+		mpz_set(out[pos], num);
 		pos++;
-		printf(" Num: %d\n", num);
+		gmp_printf(" Num: %Zd\n", num);
 	}	
 	
 	return pos;

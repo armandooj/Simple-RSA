@@ -33,7 +33,7 @@ int main() {
 	mpz_t p;
 	mpz_init(p);
 	mpz_set_ui(p, 919);
-	int prime = miller_rabin_test(p, 5);
+	int prime = miller_rabin_test(p, 3);
 	gmp_printf("%Zd prime? = %d\n", p, prime);
 
 	free(mpz_t_array);

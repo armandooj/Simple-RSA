@@ -6,7 +6,12 @@
 void inverse_mod(mpz_t x, mpz_t n, mpz_t *out) {
 	// Returns non-zero if an inverse exists, zero otherwise
 	mpz_invert(*out, x, n);
-	gmp_printf("\n(%Zd) ^ -1 mod %Zd =  %Zd \n", x, n, out);
+	gmp_printf("%Zd ^ -1 mod %Zd =  %Zd \n", x, n, out);
+}
+
+void exp_mod(mpz_t x, mpz_t k, mpz_t n, mpz_t *out) {
+	mpz_powm(*out, x, k, n);
+	gmp_printf("%Zd ^ %Zd mod %Zd = %Zd \n", x, k, n, out);
 }
 
 /*
@@ -39,7 +44,7 @@ int miller_rabin_test(mpz_t n, int k) {
 	unsigned long seed = 123456;
 	gmp_randstate_t r_state;
 	gmp_randinit_default(r_state);
-    gmp_randseed_ui(r_state, seed);
+	gmp_randseed_ui(r_state, seed);
 
 	int i, j;	
 	for (i = 0; i < k; i++) {
@@ -56,7 +61,7 @@ int miller_rabin_test(mpz_t n, int k) {
 		// x ← a^d mod n
 		mpz_t x;
 		mpz_init(x);
-		mpz_powm(x, a, d, n);
+		exp_mod(a, d, n, &x);
 
 		 // if x = 1 or x = n − 1 then do the for loop again
 		if (!(mpz_cmp_ui(x, 1) == 0 || mpz_cmp(x, n_1) == 0)) {
@@ -64,7 +69,7 @@ int miller_rabin_test(mpz_t n, int k) {
 			// S - 1 times
 			for (j = 0; j < s; j++) {
 				// x ← x^2 mod n
-				mpz_powm_ui (x, x, 2, n);
+				mpz_powm_ui(x, x, 2, n);
 				// if x = 1 then return composite      
 				if (mpz_cmp_ui(x, 1) == 0) {
 					// Composite

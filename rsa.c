@@ -113,8 +113,14 @@ void get_prime(gmp_randstate_t *state, unsigned long b, mpz_t *p) {
 	}
 }
 
-void generate_robust_prime(unsigned long b, mpz_t *p) {	
-	b -= 1;
+/* 
+Implementation of Gordon's algorithm for generating a strong prime
+A prime number is said to be a strong primeif integers r, s and t exist s.t.:
+ * p - 1 has a large prime factor, r
+ * p + 1 has a large prime factor, s
+ * r - 1 has a large prime factor, t
+*/
+void generate_robust_prime(unsigned long b, mpz_t *p) {
 	gmp_randstate_t r_state;
 	gmp_randinit_default(r_state);
 	gmp_randseed_ui(r_state, time(NULL));
@@ -125,9 +131,53 @@ void generate_robust_prime(unsigned long b, mpz_t *p) {
 	mpz_init(t);
 	get_prime(&r_state, b, &s);
 	get_prime(&r_state, b, &t);
-	gmp_printf("\ns: %Zd\nt: %Zd\n", s, t);
 
-	
+	// Find the smallest k s.t. r = 2kt + 1 is prime
+	mpz_t r, temp;
+	mpz_init(r);
+	mpz_init(temp);
+
+	mpz_mul_ui(r, t, 1);
+	mpz_mul_ui(r, r, 2);
+	mpz_add_ui(r, r, 1);
+	mpz_mul_ui(temp, t, 2);	
+
+	while (miller_rabin_test(r, 5) != 1) {
+		// r += 2 * t
+		mpz_add(r, r, temp);
+	}
+
+	// Compute l = 2(s^(r − 2) mod r)s − 1
+	mpz_t l;
+	mpz_init(l);
+
+	mpz_sub_ui(l, r, 2);
+	mpz_powm(l, s, l, r);
+	mpz_mul_ui(l, l, 2);
+	mpz_mul(l, l, s);
+	mpz_sub_ui(l, l, 1);
+
+	// Find the smallest h s.t. p = l + 2hrs is prime
+	mpz_mul_ui(*p, r, 2);
+	mpz_mul(*p, *p, s);
+	mpz_add(*p, *p, l);
+
+	while (miller_rabin_test(*p, 5) != 1) {
+		// p += 2 * r * s
+		mpz_t aux;
+		mpz_init(aux);
+		mpz_mul_ui(aux, r, 2);
+		mpz_mul(aux, aux, s);		
+		mpz_add(*p, *p, aux);
+		mpz_clear(aux);
+	}
+
+	gmp_printf("Strong p: %Zd\n", p);
+
+	mpz_clear(s);
+	mpz_clear(t);
+	mpz_clear(temp);
+	mpz_clear(l);
 }	
 
 // Finds the number of letters that would fit in n

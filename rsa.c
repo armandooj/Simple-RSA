@@ -1,17 +1,18 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 #include "rsa.h"
 
 void inverse_mod(mpz_t x, mpz_t n, mpz_t *out) {
 	// Returns non-zero if an inverse exists, zero otherwise
 	mpz_invert(*out, x, n);
-	gmp_printf("%Zd ^ -1 mod %Zd =  %Zd \n", x, n, out);
+	// gmp_printf("%Zd ^ -1 mod %Zd =  %Zd \n", x, n, out);
 }
 
 void exp_mod(mpz_t x, mpz_t k, mpz_t n, mpz_t *out) {
 	mpz_powm(*out, x, k, n);
-	gmp_printf("%Zd ^ %Zd mod %Zd = %Zd \n", x, k, n, out);
+	// gmp_printf("%Zd ^ %Zd mod %Zd = %Zd \n", x, k, n, out);
 }
 
 /*
@@ -41,10 +42,9 @@ int miller_rabin_test(mpz_t n, int k) {
 	}
 	s--;
 
-	unsigned long seed = 123456;
 	gmp_randstate_t r_state;
 	gmp_randinit_default(r_state);
-	gmp_randseed_ui(r_state, seed);
+	gmp_randseed_ui(r_state, time(NULL));
 
 	int i, j;	
 	for (i = 0; i < k; i++) {
@@ -95,6 +95,40 @@ int miller_rabin_test(mpz_t n, int k) {
 	// Probably prime
 	return 1;
 }
+
+// Ensures n is > 3 by generating random numbers until the condition is met
+void miller_rabin_check(gmp_randstate_t *state, unsigned long b, mpz_t *n) {		
+	while ((mpz_cmp_ui(*n, 3) <= 0)) {
+		// Generates a random from 0 to b bits
+		mpz_urandomb(*n, *state, b);
+	}
+}
+
+// Randomly finds a prime number of b bits
+void get_prime(gmp_randstate_t *state, unsigned long b, mpz_t *p) {
+	miller_rabin_check(state, b, p);
+	while (miller_rabin_test(*p, 5) != 1) {
+		mpz_urandomb(*p, *state, b);
+		miller_rabin_check(state, b, p);
+	}
+}
+
+void generate_robust_prime(unsigned long b, mpz_t *p) {	
+	b -= 1;
+	gmp_randstate_t r_state;
+	gmp_randinit_default(r_state);
+	gmp_randseed_ui(r_state, time(NULL));
+
+	// Generate two prime numbers s, t of b bits
+	mpz_t s, t;
+	mpz_init(s);
+	mpz_init(t);
+	get_prime(&r_state, b, &s);
+	get_prime(&r_state, b, &t);
+	gmp_printf("\ns: %Zd\nt: %Zd\n", s, t);
+
+	
+}	
 
 // Finds the number of letters that would fit in n
 // TODO Should it be ceil(log_2(n)) ?

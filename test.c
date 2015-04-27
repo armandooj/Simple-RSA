@@ -33,8 +33,12 @@ int main() {
 	mpz_t p;
 	mpz_init(p);
 	mpz_set_ui(p, 919);
+	// reasonable values vary from 5 to 10
 	int prime = miller_rabin_test(p, 3);
 	gmp_printf("%Zd prime? = %d\n", p, prime);
+
+	// Gordon's
+	generate_robust_prime(130, &p);
 
 	free(mpz_t_array);
 	free(buffer);

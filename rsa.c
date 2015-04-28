@@ -4,6 +4,9 @@
 #include <time.h>
 #include "rsa.h"
 
+#define STRONG_PRIME_SIZE 130
+#define MILLER_RABIN_PROB 5
+
 void inverse_mod(mpz_t x, mpz_t n, mpz_t *out) {
 	// Returns non-zero if an inverse exists, zero otherwise
 	mpz_invert(*out, x, n);
@@ -107,7 +110,7 @@ void miller_rabin_check(gmp_randstate_t *state, unsigned long b, mpz_t *n) {
 // Randomly finds a prime number of b bits
 void get_prime(gmp_randstate_t *state, unsigned long b, mpz_t *p) {
 	miller_rabin_check(state, b, p);
-	while (miller_rabin_test(*p, 5) != 1) {
+	while (miller_rabin_test(*p, MILLER_RABIN_PROB) != 1) {
 		mpz_urandomb(*p, *state, b);
 		miller_rabin_check(state, b, p);
 	}
@@ -142,7 +145,7 @@ void generate_robust_prime(unsigned long b, mpz_t *p) {
 	mpz_add_ui(r, r, 1);
 	mpz_mul_ui(temp, t, 2);	
 
-	while (miller_rabin_test(r, 5) != 1) {
+	while (miller_rabin_test(r, MILLER_RABIN_PROB) != 1) {
 		// r += 2 * t
 		mpz_add(r, r, temp);
 	}
@@ -162,7 +165,7 @@ void generate_robust_prime(unsigned long b, mpz_t *p) {
 	mpz_mul(*p, *p, s);
 	mpz_add(*p, *p, l);
 
-	while (miller_rabin_test(*p, 5) != 1) {
+	while (miller_rabin_test(*p, MILLER_RABIN_PROB) != 1) {
 		// p += 2 * r * s
 		mpz_t aux;
 		mpz_init(aux);
@@ -178,7 +181,7 @@ void generate_robust_prime(unsigned long b, mpz_t *p) {
 	mpz_clear(t);
 	mpz_clear(temp);
 	mpz_clear(l);
-}	
+}
 
 // Finds the number of letters that would fit in n
 // TODO Should it be ceil(log_2(n)) ?
@@ -271,4 +274,42 @@ void int_to_string(mpz_t *integers, int i_size, mpz_t n, char *out) {
 			mpz_clear(temp);
 		}	
 	}
+}
+
+void generate_keys(mpz_t *e, mpz_t *n, mpz_t *d) {
+	// Generate 2 prime numbers, p and q
+	mpz_t p, q, p_1, q_1, phi_n;
+	mpz_init(p);
+	mpz_init(q);
+	mpz_init(p_1);
+	mpz_init(q_1);
+	mpz_init(phi_n);
+	generate_robust_prime(STRONG_PRIME_SIZE, &p);
+	generate_robust_prime(STRONG_PRIME_SIZE, &q);
+
+	// Delete
+	mpz_set_ui(p, 47);
+	mpz_set_ui(q, 59);
+
+	// n = p * q
+	mpz_mul(*n, p, q);
+	// phi_n = (p - 1)(q - 1)
+	mpz_sub_ui(p_1, p, 1);
+	mpz_sub_ui(q_1, q, 1);
+	mpz_mul(phi_n, p_1, q_1);
+
+	// TODO
+	mpz_set_ui(*e, 17);
+
+	// d = e^-1 mod phi_n
+	mpz_invert(*d, *e, phi_n);
+
+	gmp_printf("Public key (e, n) -> (%Zd, %Zd)\n", *e, *n);
+	gmp_printf("Private key d -> %Zd\n", *d);
+}
+
+void rsa_encrypt() {
+	// mpz_t p;
+	// mpz_t q;
+	// generate_keys(&p, &q);
 }

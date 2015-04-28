@@ -7,20 +7,22 @@
 
 int main() {
 
+	/*
 	// Using GMP
 	mpz_t n;
 	mpz_init(n);
 	mpz_set_ui(n, N);
 
 	char message[] = "I'm normally not a praying man, but if you're up there, please save me, Superman. Oh, a *sarcasm* detector. Oh, that's a *really* useful invention!";
-	mpz_t *mpz_t_array = malloc(sizeof(mpz_t) * strlen(message));
+	//char message[] = "Test";
+	mpz_t *mpz_t_array = malloc(sizeof(mpz_t) * (strlen(message) + 1));
 	
 	int no_elements = string_to_int(message, n, mpz_t_array);
 	
 	char *buffer = malloc(sizeof(char) * strlen(message));
-	int_to_string(mpz_t_array, no_elements, n, buffer);
+	int_to_string(mpz_t_array, n, buffer);
 	
-	printf("\nMessage: %s\n", buffer);	
+	printf("\nMessage: %s\n", buffer);
 
 	mpz_t x, n2, inv;
 	mpz_init(x);
@@ -43,5 +45,19 @@ int main() {
 	free(mpz_t_array);
 	free(buffer);
 	mpz_clear(n);
+	*/
+
+	// Alice generates private and public keys
+	mpz_t e, n, d;
+	mpz_init(e);
+	mpz_init(n);
+	mpz_init(d);
+	generate_keys(&e, &n, &d);
+
+	// Bob wants to send a message. Use Alice's public key
+	char message[] = "I'm normally not a praying man, but if you're up there, please save me, Superman. Oh, a *sarcasm* detector. Oh, that's a *really* useful invention!";
+	mpz_t *c = malloc(sizeof(mpz_t) * strlen(message));	
+	rsa_encrypt(e, n, message, c);
+
 	return 0;
 }

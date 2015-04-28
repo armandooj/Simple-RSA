@@ -1,9 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <time.h>
 #include "rsa.h"
 
+#define NUMBER_SIZE 8000000000000000
 #define STRONG_PRIME_SIZE 130
 #define MILLER_RABIN_PROB 5
 
@@ -248,7 +250,11 @@ int string_to_int(char *s, mpz_t n, mpz_t *out) {
 		mpz_set(out[pos], num);
 		pos++;
 		gmp_printf(" Num: %Zd\n", num);
-	}	
+	}
+
+	// Write a 0 a the end so that the conversion to string knows when to stop
+	mpz_init(out[pos]);
+	mpz_set_ui(out[pos], 0);
 	
 	mpz_clear(num);
 	mpz_clear(temp);
@@ -256,10 +262,11 @@ int string_to_int(char *s, mpz_t n, mpz_t *out) {
 	return pos;
 }
 
-void int_to_string(mpz_t *integers, int i_size, mpz_t n, char *out) {	
+void int_to_string(mpz_t *integers, mpz_t n, char *out) {	
 	int size = calculate_int_size(n);
-	int i, aux, pos = 0;	
-	for (i = 0; i < i_size; i++) {
+	int aux, i = 0, pos = 0;	
+
+	while (mpz_cmp_ui(integers[i], 0) != 0) {
 		int j;
 		for (j = size - 1; j >= 0; j--) {
 			// Unshift the bits
@@ -272,7 +279,8 @@ void int_to_string(mpz_t *integers, int i_size, mpz_t n, char *out) {
 			// Store the letter in the char array
 			out[pos++] = (char) mpz_get_ui(temp);
 			mpz_clear(temp);
-		}	
+		}
+		i++;	
 	}
 }
 
@@ -306,10 +314,29 @@ void generate_keys(mpz_t *e, mpz_t *n, mpz_t *d) {
 
 	gmp_printf("Public key (e, n) -> (%Zd, %Zd)\n", *e, *n);
 	gmp_printf("Private key d -> %Zd\n", *d);
+
+	mpz_clear(p);
+	mpz_clear(q);
+	mpz_clear(p_1);
+	mpz_clear(q_1);
+	mpz_clear(phi_n);
 }
 
-void rsa_encrypt() {
-	// mpz_t p;
-	// mpz_t q;
-	// generate_keys(&p, &q);
+void rsa_encrypt(mpz_t e, mpz_t n, char *s, mpz_t *c) {
+	// Conver to an array of integers
+	mpz_t num_size;
+	mpz_init(num_size);
+	mpz_set_ui(num_size, NUMBER_SIZE);
+	mpz_t *mpz_t_array = malloc(sizeof(mpz_t) * strlen(s));	
+	string_to_int(s, num_size, mpz_t_array);
+
+	// Encrypt each part -> c = m^e mod n
+	int i = 0;
+	while (mpz_cmp_ui(mpz_t_array[i], 0) != 0) {
+		mpz_init(c[i]);
+		mpz_powm(c[i], mpz_t_array[i], e, n);
+		gmp_printf("c -> %Zd\n", c[i]);
+		i++;
+	}
+
 }

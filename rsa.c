@@ -5,20 +5,16 @@
 #include <time.h>
 #include "rsa.h"
 
-//#define NUMBER_SIZE 8000000000000000
-#define NUMBER_SIZE 100000000
-#define STRONG_PRIME_SIZE 5
+#define NUMBER_SIZE 1000000000000000
+#define STRONG_PRIME_SIZE 130
 #define MILLER_RABIN_PROB 5
 
 void inverse_mod(mpz_t x, mpz_t n, mpz_t *out) {
-	// Returns non-zero if an inverse exists, zero otherwise
 	mpz_invert(*out, x, n);
-	// gmp_printf("%Zd ^ -1 mod %Zd =  %Zd \n", x, n, out);
 }
 
 void exp_mod(mpz_t x, mpz_t k, mpz_t n, mpz_t *out) {
 	mpz_powm(*out, x, k, n);
-	// gmp_printf("%Zd ^ %Zd mod %Zd = %Zd \n", x, k, n, out);
 }
 
 /*
@@ -134,9 +130,6 @@ void generate_robust_prime(unsigned long b, mpz_t *p, gmp_randstate_t *r_state) 
 	get_prime(r_state, b, &s);
 	get_prime(r_state, b, &t);
 
-	// gmp_printf("s: %Zd\n", s);
-	// gmp_printf("t: %Zd\n", t);
-
 	// Find the smallest k s.t. r = 2kt + 1 is prime
 	mpz_t r, temp;
 	mpz_init(r);
@@ -177,8 +170,6 @@ void generate_robust_prime(unsigned long b, mpz_t *p, gmp_randstate_t *r_state) 
 		mpz_clear(aux);
 	}
 
-	// gmp_printf("Strong p: %Zd\n", p);
-
 	mpz_clear(s);
 	mpz_clear(t);
 	mpz_clear(r);	
@@ -195,7 +186,7 @@ void generate_robust_prime(unsigned long b, mpz_t *p, gmp_randstate_t *r_state) 
 }
 
 // Finds the number of letters that would fit in n
-// TODO Should it be ceil(log_2(n)) ?
+// TODO Should it be ceil(log_2(n)) ?     // n / 8
 int calculate_int_size(mpz_t n) {
 	// The smallest a part can be is of 1 (one char)
 	if (mpz_cmp_d(n, 256) < 0) {
@@ -325,8 +316,9 @@ void generate_keys(mpz_t *e, mpz_t *n, mpz_t *d) {
 	mpz_init(temp);
 	mpz_gcd(temp, *e, phi_n);
 	while (mpz_cmp_ui(temp, 1) != 0) {
-		gmp_printf("e not prime %Zd\n", e);
+		gmp_printf("e not prime %Zd\n", e);		
 		mpz_add_ui(*e, *e , 2);
+		mpz_gcd(temp, *e, phi_n);
 	}
 
 	// d = e^-1 mod phi_n

@@ -55,9 +55,15 @@ int main() {
 	generate_keys(&e, &n, &d);
 
 	// Bob wants to send a message. Use Alice's public key
-	char message[] = "I'm normally not a praying man, but if you're up there, please save me, Superman. Oh, a *sarcasm* detector. Oh, that's a *really* useful invention!";
-	mpz_t *c = malloc(sizeof(mpz_t) * strlen(message));	
+	//char message[] = "I'm normally not a praying man, but if you're up there, please save me, Superman. Oh, a *sarcasm* detector. Oh, that's a *really* useful invention!";
+	char message[] = "I'm normally not a praying man";
+	mpz_t *c = malloc(sizeof(mpz_t) * strlen(message) + 1);	
 	rsa_encrypt(e, n, message, c);
+
+	// Alice decrypts the message with her private key
+	char *buffer = malloc(sizeof(char) * strlen(message));
+	rsa_decrypt(d, n, c, buffer);
+	printf("Message: %s\n", buffer);
 
 	return 0;
 }

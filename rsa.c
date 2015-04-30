@@ -114,7 +114,6 @@ void miller_rabin_check(gmp_randstate_t *state, unsigned long b, mpz_t *n) {
 void get_prime(gmp_randstate_t *state, unsigned long b, mpz_t *p) {
 	miller_rabin_check(state, b, p);
 	while (miller_rabin_test(*p, MILLER_RABIN_PROB) != 1) {
-		// gmp_randseed_ui(*state, time(NULL));
 		mpz_urandomb(*p, *state, b);
 		miller_rabin_check(state, b, p);
 	}
@@ -135,8 +134,8 @@ void generate_robust_prime(unsigned long b, mpz_t *p, gmp_randstate_t *r_state) 
 	get_prime(r_state, b, &s);
 	get_prime(r_state, b, &t);
 
-	gmp_printf("s: %Zd\n", s);
-	gmp_printf("t: %Zd\n", t);
+	// gmp_printf("s: %Zd\n", s);
+	// gmp_printf("t: %Zd\n", t);
 
 	// Find the smallest k s.t. r = 2kt + 1 is prime
 	mpz_t r, temp;
@@ -178,18 +177,26 @@ void generate_robust_prime(unsigned long b, mpz_t *p, gmp_randstate_t *r_state) 
 		mpz_clear(aux);
 	}
 
-	gmp_printf("Strong p: %Zd\n", p);
+	// gmp_printf("Strong p: %Zd\n", p);
 
 	mpz_clear(s);
 	mpz_clear(t);
-	mpz_clear(temp);
+	mpz_clear(r);	
 	mpz_clear(l);
+
+	// Make sure the size is at least 2b + 1
+	mpz_set_ui(temp, 2);
+	mpz_pow_ui(temp, temp, STRONG_PRIME_SIZE * 2 + 1);
+	if (mpz_cmp(*p, temp) <= 0) {		
+		generate_robust_prime(b, p, r_state);
+	}
+
+	mpz_clear(temp);
 }
 
 // Finds the number of letters that would fit in n
 // TODO Should it be ceil(log_2(n)) ?
 int calculate_int_size(mpz_t n) {
-	return 10;
 	// The smallest a part can be is of 1 (one char)
 	if (mpz_cmp_d(n, 256) < 0) {
 		return 1;
@@ -302,9 +309,8 @@ void generate_keys(mpz_t *e, mpz_t *n, mpz_t *d) {
 	generate_robust_prime(STRONG_PRIME_SIZE, &p, &r_state);
 	generate_robust_prime(STRONG_PRIME_SIZE, &q, &r_state);
 
-	// Delete
-	// mpz_set_ui(p, 47);
-	// mpz_set_ui(q, 59);
+	gmp_printf("Strong p: %Zd\n", p);
+	gmp_printf("Strong q: %Zd\n", q);
 
 	// n = p * q
 	mpz_mul(*n, p, q);
@@ -313,17 +319,15 @@ void generate_keys(mpz_t *e, mpz_t *n, mpz_t *d) {
 	mpz_sub_ui(q_1, q, 1);
 	mpz_mul(phi_n, p_1, q_1);
 
-	// TODO
-	mpz_set_ui(*e, 2573);
-	/*
+	// Find a public exponent
+	mpz_set_ui(*e, 17);
 	mpz_t temp;
 	mpz_init(temp);
 	mpz_gcd(temp, *e, phi_n);
-	gmp_printf("-> %Zd\n", temp);
 	while (mpz_cmp_ui(temp, 1) != 0) {
-		printf("e not prime\n");
-		mpz_nextprime(*e, *e);
-	} */
+		gmp_printf("e not prime %Zd\n", e);
+		mpz_add_ui(*e, *e , 2);
+	}
 
 	// d = e^-1 mod phi_n
 	mpz_invert(*d, *e, phi_n);
@@ -336,6 +340,7 @@ void generate_keys(mpz_t *e, mpz_t *n, mpz_t *d) {
 	mpz_clear(p_1);
 	mpz_clear(q_1);
 	mpz_clear(phi_n);
+	mpz_clear(temp);
 }
 
 // Encrypts a message with the given public key and writes the ciphered message to out
@@ -345,17 +350,14 @@ void rsa_encrypt(mpz_t e, mpz_t n, char *s, mpz_t *c) {
 	mpz_init(num_size);
 	mpz_set_ui(num_size, NUMBER_SIZE);
 	mpz_t *mpz_t_array = malloc(sizeof(mpz_t) * strlen(s));	
-	string_to_int(s, num_size, mpz_t_array);
-
-	// DELETE
-	mpz_set_ui(mpz_t_array[0], 66);	
+	string_to_int(s, num_size, mpz_t_array);	
 
 	// Encrypt each part -> c = M^e mod n
 	int i = 0;
 	while (mpz_cmp_ui(mpz_t_array[i], 0) != 0) {
 		mpz_init(c[i]);
 		mpz_powm(c[i], mpz_t_array[i], e, n);
-		gmp_printf("c -> %Zd, M -> %Zd\n", c[i], mpz_t_array[i]);
+		gmp_printf("c -> %Zd of (%Zd)\n", c[i], mpz_t_array[i]);
 		i++;
 	}
 
@@ -369,13 +371,22 @@ void rsa_decrypt(mpz_t d, mpz_t n, mpz_t *c, char *out) {
 	// Decrypt each part -> M = c^d mod n
 	int i = 0;
 	mpz_t temp;
+	// TODO Use the right size
+	mpz_t *integers = malloc(sizeof(mpz_t) * 1000);
 	mpz_init(temp);
+	// Write the numbers to an array
 	while (mpz_cmp_ui(c[i], 0) != 0) {
 		mpz_powm(temp, c[i], d, n);
-		out[i] = (char) mpz_get_ui(temp);
+		mpz_set(integers[i], temp);
+		//integers[i] = mpz_get_ui(temp);
 		gmp_printf("M -> %Zd\n", temp);
 		i++;
 	}
 
+	// Convert back to string
+	mpz_set_ui(temp, NUMBER_SIZE);
+	int_to_string(integers, temp, out);
+
+	free(integers);
 	mpz_clear(temp);
 }

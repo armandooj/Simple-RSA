@@ -5,7 +5,7 @@
 #include <time.h>
 #include "rsa.h"
 
-#define NUMBER_SIZE 1000000000000000
+#define NUMBER_SIZE 100000000000000
 #define STRONG_PRIME_SIZE 130
 #define MILLER_RABIN_PROB 5
 
@@ -186,26 +186,8 @@ void generate_robust_prime(unsigned long b, mpz_t *p, gmp_randstate_t *r_state) 
 }
 
 // Finds the number of letters that would fit in n
-// TODO Should it be ceil(log_2(n)) ?     // n / 8
 int calculate_int_size(mpz_t n) {
-	// The smallest a part can be is of 1 (one char)
-	if (mpz_cmp_d(n, 256) < 0) {
-		return 1;
-	}
-	mpz_t aux;
-	mpz_init(aux);
-	mpz_set_ui(aux, 2);
-	int size = 0;
-	int ex = 2;
-	// Equivalent to: while (n >= (256 << aux))
-	while (mpz_cmp(n, aux) > 0) {	
-		mpz_ui_pow_ui(aux, 16, ex);
-		size++;
-		ex += 2;
-	}
-
-	mpz_clear(aux);
-	return size - 1;
+	return (log(mpz_get_d(n)) / log(2)) / 8;;
 }
 
 // Converts a string to an array of integers bewteen 0 and n - 1
@@ -370,7 +352,6 @@ void rsa_decrypt(mpz_t d, mpz_t n, mpz_t *c, char *out) {
 	while (mpz_cmp_ui(c[i], 0) != 0) {
 		mpz_powm(temp, c[i], d, n);
 		mpz_set(integers[i], temp);
-		//integers[i] = mpz_get_ui(temp);
 		gmp_printf("M -> %Zd\n", temp);
 		i++;
 	}

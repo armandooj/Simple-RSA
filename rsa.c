@@ -5,7 +5,7 @@
 #include <time.h>
 #include "rsa.h"
 
-#define NUMBER_SIZE 100000000000000
+#define NUMBER_SIZE 10000000000000000
 #define STRONG_PRIME_SIZE 130
 // Primality check error probability
 const double prob_error = 0.001;
@@ -143,7 +143,7 @@ void generate_robust_prime(unsigned long b, mpz_t *p, gmp_randstate_t *r_state) 
 	mpz_mul_ui(r, t, 1);
 	mpz_mul_ui(r, r, 2);
 	mpz_add_ui(r, r, 1);
-	mpz_mul_ui(temp, t, 2);	
+	mpz_mul_ui(temp, t, 2);
 
 	while (miller_rabin_test(r, prob_error) != 1) {
 		// r += 2 * t
@@ -228,7 +228,7 @@ int string_to_int(char *s, mpz_t n, mpz_t *out) {
 			// temp *= (int) s[j];
 			mpz_mul_ui(temp, temp, (int) s[j]);
 			// num += temp;
-			mpz_add(num, num, temp);			
+			mpz_add(num, num, temp);
 			letters++;
 			aux++;
 		}
@@ -236,8 +236,10 @@ int string_to_int(char *s, mpz_t n, mpz_t *out) {
 		mpz_init(out[pos]);
 		mpz_set(out[pos], num);
 		pos++;
-		gmp_printf(" Num: %Zd\n", num);
+		gmp_printf(" -> %Zd\n", num);
 	}
+
+	printf("\n");
 
 	// Write a 0 a the end so that the conversion to string knows when to stop
 	mpz_init(out[pos]);
@@ -272,6 +274,7 @@ void int_to_string(mpz_t *integers, mpz_t n, char *out) {
 }
 
 void generate_keys(mpz_t *e, mpz_t *n, mpz_t *d) {
+	printf("--- Key generation ---\n");
 	// Generate 2 prime numbers, p and q
 	mpz_t p, q, p_1, q_1, phi_n;
 	mpz_init(p);
@@ -324,6 +327,8 @@ void generate_keys(mpz_t *e, mpz_t *n, mpz_t *d) {
 
 // Encrypts a message with the given public key and writes the ciphered message to out
 void rsa_encrypt(mpz_t e, mpz_t n, char *s, mpz_t *c) {
+
+	printf("\n--- Encryption ---\n");
 	// Conver to an array of integers
 	mpz_t num_size;
 	mpz_init(num_size);
@@ -336,7 +341,7 @@ void rsa_encrypt(mpz_t e, mpz_t n, char *s, mpz_t *c) {
 	while (mpz_cmp_ui(mpz_t_array[i], 0) != 0) {
 		mpz_init(c[i]);
 		mpz_powm(c[i], mpz_t_array[i], e, n);
-		gmp_printf("c -> %Zd of (%Zd)\n", c[i], mpz_t_array[i]);
+		gmp_printf("cipher of %Zd = %Zd\n", mpz_t_array[i], c[i]);
 		i++;
 	}
 
@@ -347,6 +352,7 @@ void rsa_encrypt(mpz_t e, mpz_t n, char *s, mpz_t *c) {
 }
 
 void rsa_decrypt(mpz_t d, mpz_t n, mpz_t *c, char *out) {
+	printf("\n--- Decryption ---\n");
 	// Decrypt each part -> M = c^d mod n
 	int i = 0;
 	mpz_t temp;
@@ -357,7 +363,7 @@ void rsa_decrypt(mpz_t d, mpz_t n, mpz_t *c, char *out) {
 	while (mpz_cmp_ui(c[i], 0) != 0) {
 		mpz_powm(temp, c[i], d, n);
 		mpz_set(integers[i], temp);
-		gmp_printf("M -> %Zd\n", temp);
+		gmp_printf("M%d -> %Zd\n", i, temp);
 		i++;
 	}
 

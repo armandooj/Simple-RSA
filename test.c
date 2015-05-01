@@ -13,6 +13,7 @@ int main() {
 	generate_keys(&e, &n, &d);
 
 	// Bob wants to send a message. Use Alice's public key
+	//char message[] = "Here you go, Alice!";
 	char message[] = "I'm normally not a praying man, but if you're up there, please save me, Superman. Oh, a *sarcasm* detector. Oh, that's a *really* useful invention!";
 	//char message[] = "I'm normally not a praying man";
 	mpz_t *c = malloc(sizeof(mpz_t) * strlen(message) + 1);	

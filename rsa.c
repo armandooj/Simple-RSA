@@ -7,7 +7,8 @@
 
 #define NUMBER_SIZE 100000000000000
 #define STRONG_PRIME_SIZE 130
-#define MILLER_RABIN_PROB 5
+// Primality check error probability
+const double prob_error = 0.001;
 
 void inverse_mod(mpz_t x, mpz_t n, mpz_t *out) {
 	mpz_invert(*out, x, n);
@@ -23,7 +24,7 @@ Input: n > 3, an odd integer to be tested for primality
 Input: k, accuracy of the test -> 0 < k < 1
 Output: 0 if n is composite, 1 probably prime
 */
-int miller_rabin_test(mpz_t n, int k) {
+int miller_rabin_test(mpz_t n, double k) {
 	int s = 1;
 	long aux;
 	mpz_t d, n_1, temp;
@@ -48,8 +49,11 @@ int miller_rabin_test(mpz_t n, int k) {
 	gmp_randinit_default(r_state);
 	gmp_randseed_ui(r_state, time(NULL));
 
-	int i, j;	
-	for (i = 0; i < k; i++) {
+	// Probability that the test is wrong = 1/4 per iteration
+	float prob_is_wrong = 1;
+
+	int j;	
+	while (prob_is_wrong > k) {
 	    mpz_t a;
 	    mpz_init(a);
 	    mpz_set_ui(a, 0);
@@ -87,8 +91,9 @@ int miller_rabin_test(mpz_t n, int k) {
 			if (flag) return 0;
 		}
 
+		prob_is_wrong *= .25;
 		mpz_clear(a);
-		mpz_clear(x);
+		mpz_clear(x);		
 	}
 
 	mpz_clear(d);
@@ -109,7 +114,7 @@ void miller_rabin_check(gmp_randstate_t *state, unsigned long b, mpz_t *n) {
 // Randomly finds a prime number of b bits
 void get_prime(gmp_randstate_t *state, unsigned long b, mpz_t *p) {
 	miller_rabin_check(state, b, p);
-	while (miller_rabin_test(*p, MILLER_RABIN_PROB) != 1) {
+	while (miller_rabin_test(*p, prob_error) != 1) {
 		mpz_urandomb(*p, *state, b);
 		miller_rabin_check(state, b, p);
 	}
@@ -140,7 +145,7 @@ void generate_robust_prime(unsigned long b, mpz_t *p, gmp_randstate_t *r_state) 
 	mpz_add_ui(r, r, 1);
 	mpz_mul_ui(temp, t, 2);	
 
-	while (miller_rabin_test(r, MILLER_RABIN_PROB) != 1) {
+	while (miller_rabin_test(r, prob_error) != 1) {
 		// r += 2 * t
 		mpz_add(r, r, temp);
 	}
@@ -160,7 +165,7 @@ void generate_robust_prime(unsigned long b, mpz_t *p, gmp_randstate_t *r_state) 
 	mpz_mul(*p, *p, s);
 	mpz_add(*p, *p, l);
 
-	while (miller_rabin_test(*p, MILLER_RABIN_PROB) != 1) {
+	while (miller_rabin_test(*p, prob_error) != 1) {
 		// p += 2 * r * s
 		mpz_t aux;
 		mpz_init(aux);

@@ -23,5 +23,10 @@ int main() {
 	rsa_decrypt(d, n, c, buffer);
 	printf("Message: %s\n", buffer);
 
+	free(c);
+	free(buffer);
+	mpz_clear(e);
+	mpz_clear(n);
+	mpz_clear(d);
 	return 0;
 }
